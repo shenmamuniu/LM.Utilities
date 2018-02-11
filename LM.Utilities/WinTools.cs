@@ -137,11 +137,11 @@ namespace LM.Utilities
         public static void WriteMemory(string key, IntPtr handler)
         {
             MemoryMappedFile mmf = MemoryMappedFile.CreateOrOpen(key, 1024000);
-            using (MemoryMappedViewStream stream = mmf.CreateViewStream()) //注意这里的偏移量  
+            using (MemoryMappedViewStream stream = mmf.CreateViewStream()) 
             {
                 using (MemoryMappedViewAccessor accessor = mmf.CreateViewAccessor())
                 {
-                    accessor.Write(0, ref handler);//这里的handler就是我们窗口句柄  
+                    accessor.Write(0, ref handler);
                 }
             }
         } 
