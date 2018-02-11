@@ -105,6 +105,7 @@ namespace LM.Utilities
         #region check app started.
         /// <summary>
         /// get windows intptr from memory.if intptr equals IntPtr.Zero,it shows this app hasn't started yet,or this app has started.
+        /// http://blog.csdn.net/lightspear/article/details/50831949
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
