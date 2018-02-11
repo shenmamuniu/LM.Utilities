@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +19,7 @@ namespace LM.Utilities
         /// Exccute commands in cmd
         /// </summary>
         /// <param name="inputAction">like p=>{p("");p("");}</param>
-        public static void ExecBatCommand(Action<Action<string>> inputAction) {
+        public static void ExecBatCommand(Action<Action<string>> inputAction,DataReceivedEventHandler dataReceivedEventHandler, DataReceivedEventHandler errEventHandler) {
             Process pro = null;
             StreamWriter sIn = null;
             StreamReader sOut = null;
@@ -32,12 +34,8 @@ namespace LM.Utilities
                 pro.StartInfo.RedirectStandardOutput = true;
                 pro.StartInfo.RedirectStandardError = true;
 
-                pro.OutputDataReceived += (sender, e) => {
-                   
-                };
-                pro.ErrorDataReceived += (sender, e) => {
-                   
-                };
+                pro.OutputDataReceived += dataReceivedEventHandler;
+                pro.ErrorDataReceived += errEventHandler;
 
                 pro.Start();
                 sIn = pro.StandardInput;
@@ -61,5 +59,92 @@ namespace LM.Utilities
                     pro.Close();
             }
         }
+        /// <summary>
+        /// get all software installed
+        /// </summary>
+        /// <returns></returns>
+        public static List<string> GetAllApps() {
+            List<string> appList = new List<string>();
+            string tempType = null;
+            object displayName = null, uninstallString = null, releaseType = null;
+            RegistryKey currentKey = null;
+            RegistryKey pregkey = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall");
+            try
+            {                
+                foreach (string item in pregkey.GetSubKeyNames())
+                {
+                    currentKey = pregkey.OpenSubKey(item);
+                    displayName = currentKey.GetValue("DisplayName");
+                    uninstallString = currentKey.GetValue("UninstallString");
+                    releaseType = currentKey.GetValue("ReleaseType");                    
+                    bool isSecurityUpdate = false;
+                    if (releaseType != null)
+                    {
+                        tempType = releaseType.ToString();
+                        if (tempType == "Security Update" || tempType == "Update")
+                            isSecurityUpdate = true;
+                    }
+
+                    if (!isSecurityUpdate && displayName != null && uninstallString != null)
+                    {
+                        //appList.Add(softNum.ToString() + "," + displayName.ToString() + "," + uninstallString.ToString());
+                        appList.Add(displayName.ToString());
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.Message.ToString(), "Exception");
+            }
+            finally
+            {
+                pregkey.Close();
+            }
+            return appList;
+        }
+        #region check app started.
+        /// <summary>
+        /// get windows intptr from memory.if intptr equals IntPtr.Zero,it shows this app hasn't started yet,or this app has started.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public static IntPtr GetMemory(string key)
+        {
+
+            try
+            {
+                using (MemoryMappedFile mmf = MemoryMappedFile.OpenExisting(key))
+                {
+                    using (MemoryMappedViewAccessor accessor = mmf.CreateViewAccessor())
+                    {
+                        IntPtr handler = IntPtr.Zero;
+                        accessor.Read(0, out handler);
+                        return handler;
+
+                    }
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                return IntPtr.Zero;
+            }
+        }
+        /// <summary>
+        /// write window intptr into memory
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="handler"></param>
+        public static void WriteMemory(string key, IntPtr handler)
+        {
+            MemoryMappedFile mmf = MemoryMappedFile.CreateOrOpen(key, 1024000);
+            using (MemoryMappedViewStream stream = mmf.CreateViewStream()) //注意这里的偏移量  
+            {
+                using (MemoryMappedViewAccessor accessor = mmf.CreateViewAccessor())
+                {
+                    accessor.Write(0, ref handler);//这里的handler就是我们窗口句柄  
+                }
+            }
+        } 
+        #endregion
     }
 }
