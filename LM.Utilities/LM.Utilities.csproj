@@ -79,6 +79,7 @@
     <Compile Include="FileZip.cs" />
     <Compile Include="Log4net\Log4netUtility.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WebTools\HttpUtilities.cs" />
     <Compile Include="WinTools.cs" />
   </ItemGroup>
   <ItemGroup>

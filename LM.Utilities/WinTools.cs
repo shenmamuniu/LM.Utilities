@@ -61,6 +61,7 @@ namespace LM.Utilities
         }
         /// <summary>
         /// get all software installed
+        /// http://blog.csdn.net/pengqianhe/article/details/8017314
         /// </summary>
         /// <returns></returns>
         public static List<string> GetAllApps() {
